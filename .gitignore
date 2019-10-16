@@ -5,7 +5,7 @@
 **/src/config.json
 backend/static/log/
 backend/static/comics/
-
+backend/static/cache/
 .vscode/
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 

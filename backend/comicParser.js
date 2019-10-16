@@ -20,6 +20,30 @@ const Pause = (seconds = 1, print = false) => {
     return new Promise(resolve => setTimeout(() => resolve("paused for " + seconds), seconds * 1000));
 }
 
+const cacheOrDownload = (url, force = false) => {
+    const folder = `static/cache/`
+    const hash = Buffer.from(url).toString('base64');
+    const path = `${folder}/${hash}`;
+    if (!fs.existsSync(folder)) fs.mkdirSync(folder)
+
+    return new Promise(resolve => {
+        fs.readFile(path, function (err, data) {
+            if (err) {
+                https.get(url, response => response.pipe(concat({ encoding: 'buffer' }, (buf) => {
+                    fs.writeFile(path, buf, async function (err) {
+                        if (err) console.log(err);
+                        await Pause(1)
+                        resolve(buf)
+                    })
+                })));
+            } else {
+                resolve(data)
+            }
+        })
+    })
+}
+
+
 const writeFile = async (filename, content, buffer) => {
     return new Promise((resolve, reject) => {
         if (buffer)
@@ -69,9 +93,11 @@ const downloadImage = async (url, comic, page_url, title) => {
     }
 
     // if image wasnt base64 coded from source then presume it needs to be wget
-    buffer = buffer || await new Promise(resolve => {
+    /* buffer = buffer || await new Promise(resolve => {
         https.get(url, response => response.pipe(concat({ encoding: 'buffer' }, (buf) => resolve(buf))))
-    });
+    }); */
+
+    buffer = buffer || await cacheOrDownload(url);
 
     const image_for_hash = await sharp(buffer).png().toBuffer();
     const hash_for_image = await imghash.hash(image_for_hash, 8, "hex");
@@ -182,7 +208,6 @@ const handleStrip = (browser, comic, url) => {
                 image_url = image_url.trim().split(" ")[0]
                 image_url = urlTool.resolve(comic.last_url, image_url)
 
-                await Pause(1)
                 const strip = await downloadImage(image_url, comic, url)
                 if (strip) {
                     //await comic.update({ last_url: url })

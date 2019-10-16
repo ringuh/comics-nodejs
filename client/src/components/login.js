@@ -11,7 +11,7 @@ class Login extends React.Component {
     responseGoogle = (response) => {
         const Authenticate = async (google) => {
             this.setState({ progress: true })
-            let res = await axios.post('/api/novel/auth', google);
+            let res = await axios.post('/auth', google);
             if(res.data.jwt) localStorage.setItem("jwt", res.data.jwt)
             
             window.location.reload();
@@ -19,11 +19,6 @@ class Login extends React.Component {
 
         Authenticate(response)
     }
-
-    componentDidMount() {
-
-    }
-
     render() {
         return (
             <GoogleLogin

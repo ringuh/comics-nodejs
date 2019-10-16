@@ -30,6 +30,11 @@ module.exports = function (seq, type) {
         },
         hash: {
             type: type.STRING,
+        },
+        date: {
+            type: type.DATEONLY,
+            allowNull: false,
+            defaultValue: type.NOW
         }
     }, {
         timestamps: true,
@@ -37,15 +42,22 @@ module.exports = function (seq, type) {
 
     Model.prototype.toJson = function () {
         let ret = this.dataValues
+        if (this.comic) {
+            ret.comic = this.comic
+            ret.path = `http://localhost:3001/static/comics/${this.comic.alias}/${this.comic.alias}_${this.order}.webp`
+        }
+
         return ret
     }
 
 
     Model.associate = models => {
-        
+
         Model.belongsTo(models.Comic, {
+            as: 'comic',
             //onDelete: "CASCADE",
             foreignKey: 'comic_id',
+
         });
         /* Model.hasMany(models.Strip, {
             as: 'images',

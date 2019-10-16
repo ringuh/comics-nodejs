@@ -22,7 +22,7 @@ function App() {
         <Container maxWidth="lg">
           {global.user &&
             <Switch>
-              <Route exact path="/" component={Portal} />
+              <Route exact path={["/", "/:date"]} component={Portal} />
              {/*  <Route exact path="/novel" component={NovelList} />
               <Route exact path="/novel/:alias" component={Novel} />
               <Route exact path={[
