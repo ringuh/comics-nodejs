@@ -6,17 +6,31 @@ module.exports = function (seq, type) {
             autoIncrement: true,
             primaryKey: true,
         },
+        order: {
+            type: type.INTEGER,
+            defaultValue: 1,
+            allowNull: false,
+        },
         title: {
             type: type.STRING,
             trim: true,
         },
-        url: {
+        raw_src: {
             type: type.STRING,
             validate: {
                 isUrl: true
             },
             trim: true
         },
+        page_url: {
+            type: type.STRING,
+            validate: {
+                isUrl: true
+            },
+        },
+        hash: {
+            type: type.STRING,
+        }
     }, {
         timestamps: true,
     });
@@ -33,11 +47,11 @@ module.exports = function (seq, type) {
             //onDelete: "CASCADE",
             foreignKey: 'comic_id',
         });
-        Model.hasMany(models.Strip, {
+        /* Model.hasMany(models.Strip, {
             as: 'images',
             foreignKey: 'strip_id',
             allowNull: false
-        });
+        }); */
     };
 
     return Model

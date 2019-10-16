@@ -1,41 +1,143 @@
 const puppeteer = require('puppeteer');
 const cheerioAdv = require('cheerio-advanced-selectors'); // adds :last, :eq(index), :first
 const cheerio = cheerioAdv.wrap(require('cheerio'));
-/* const readability = require('node-readability-cheerio')
 const imghash = require('imghash')
-const hamming = require('hamming-distance') */
+const hamming = require('hamming')
+const sharp = require('sharp')
+const webp = require('webp-converter')
+const pathTool = require('path')
 const urlTool = require('url')
 const fs = require('fs')
 const https = require('https');
+const concat = require('concat-stream')
 const chalk = require('chalk');
 global.config = require('../client/src/config.json')
-const { Comic, Strip, Image, Sequelize } = require("./models")
-const { cyan, magenta, yellow, red, blue } = chalk.bold;
+const { Comic, Strip, Sequelize } = require("./models")
+const { cyan, magenta, yellow, red, blue, green } = chalk.bold;
 
-const writeFile = (filename, content) => {
-    fs.writeFile(`static/log/${filename}.html`, content, function (err) {
-        if (err) throw err;
-        console.log(`${filename} html saved`);
-    });
+const Pause = (seconds = 1, print = false) => {
+    if (print) console.log("pausing", seconds)
+    return new Promise(resolve => setTimeout(() => resolve("paused for " + seconds), seconds * 1000));
 }
 
-const downloadImage = (url, filename, comic) => {
-    const path = `static/comics/${comic.name}/${filename}`
-    var file = fs.createWriteStream(path);
-    https.get(url, function (response) {
-        response.pipe(file);
+const writeFile = async (filename, content, buffer) => {
+    return new Promise((resolve, reject) => {
+        if (buffer)
+            return fs.open(filename, 'w', function (err, fd) {
+                if (err) { throw 'could not open file: ' + err }
+                fs.write(fd, content, 0, content.length, null, function (err) {
+                    fs.close(fd, err => err ? reject(console.log('closing file failed: ' + err)) : resolve("ok"));
+                });
+            });
+        else
+            return fs.writeFile(`static/log/${filename}.html`, content, function (err) {
+                if (err) reject(err);
+                resolve("ok")
+                //console.log(`${filename} html saved`);
+            });
+    })
+}
+
+const downloadImage = async (url, comic, page_url, title) => {
+    /* const test_images = require("./static/log/test_images.json");
+    url = test_images.svg_base64 */
+
+    let buffer = null;
+    let ext = pathTool.extname(url).slice(1)
+    // some imageurls might be missing extension, so ask for presumed one from database
+    if (!ext || ext.trim() === "") ext = comic.extension
+    if (url.startsWith("data:")) {
+        let regex = /^\s*data:(?<media_type>(?<mime_type>[a-z\-]+\/[a-z\-\+]+)(?<params>(;[a-z\-]+\=[a-z\-]+)*))?;(?<encoding>base64)?,(?<data>[a-z0-9\!\$\&\'\,\(\)\*\+\,\;\=\-\.\_\~\:\@\/\?\%\s]*\s*)$/i;
+        let info = regex.exec(url).groups
+        // { media_type, mime_type, params, encoding, data }
+        ext = info.media_type.split("/")[1]
+        if (ext === "svg+xml") ext = "svg"
+        buffer = Buffer.from(info.data, 'base64')
+    } else { console.log(yellow("checking image:"), url) }
+
+    if (!["gif", "svg", "jpg", "jpeg", "webp", "tiff", "tif"].includes(ext)) return false
+
+    // find if this source has already been downloaded, ignore the possibility of image having been changed
+    const sourceFound = await Strip.findOne({
+        where: { comic_id: comic.id, raw_src: url },
+        attributes: ['id']
     });
 
-    return path
+    if (sourceFound) {
+        console.log(red("This image source already exists"))
+        return null
+    }
+
+    // if image wasnt base64 coded from source then presume it needs to be wget
+    buffer = buffer || await new Promise(resolve => {
+        https.get(url, response => response.pipe(concat({ encoding: 'buffer' }, (buf) => resolve(buf))))
+    });
+
+    const image_for_hash = await sharp(buffer).png().toBuffer();
+    const hash_for_image = await imghash.hash(image_for_hash, 8, "hex");
+
+    const allStrips = await Strip.findAll({
+        where: { comic_id: comic.id },
+        attributes: ['hash', 'order', 'raw_src'],
+        order: [["order", "DESC"]],
+    })
+    const next_order = allStrips.length > 0 ? allStrips[0].order + 1 : 1;
+    const path = `static/comics/${comic.alias}/${comic.alias}_${next_order}.webp`
+
+    // check existing strips for similar / same images
+    for (let i in allStrips) {
+        const compareStrip = allStrips[i];
+        const dist = hamming(compareStrip.hash, hash_for_image)
+
+        if (dist < 8) console.log(yellow("distance", dist))
+        if (dist < 2) return null
+    }
+    let image = null
+
+    // use webp-converter to reduce .gif size. sharp can only make un-animated gifs
+    if (ext === "gif") {
+        let tmp_path = `${path.split("/").slice(0, -1).join("/")}/tmpfile.gif`;
+        await writeFile(tmp_path, buffer, true);
+
+        image = await new Promise(resolve => // status 100 = ok, 101 = fail
+            webp.gwebp(tmp_path, path, "-q 80", function (status, error) {
+                if (error) console.log(red(error))
+                resolve(status == 100);
+                // remove the previous tmp from hdd
+                fs.unlinkSync(tmp_path)
+            }));
+    } // for webp, converting will destroy animation so just directly save buffer to file 
+    else if (ext === "webp") {
+        image = await writeFile(path, buffer, true);
+    } // convert rest of the images as webp
+    else {
+        image = await sharp(buffer).webp({ lossless: false }).toFile(path);
+    }
+    if (!image) return null
+    console.log(green("Saving with hash", hash_for_image))
+
+    const strip = await Strip.create({
+        comic_id: comic.id,
+        order: next_order,
+        title: title,
+        raw_src: url.startsWith("data:") ? null : url,
+        page_url: page_url,
+        hash: hash_for_image,
+    });
+
+    return strip
 }
 
 const handleStrip = (browser, comic, url) => {
-    // skip the "random collection"
-    if (comic.id === 1) return true
-    if (comic.id > 2) return true
-    return new Promise(async (resolve, reject) => {
+    const minId = parseInt(process.argv[2]) || 2;
+    const maxId = parseInt(process.argv[3]) || parseInt(process.argv[2]) || 10000;
+    if (comic.id < minId || comic.id > maxId) return true
+
+
+
+    return new Promise(async resolve => {
+        console.log(blue(comic.name, url))
         try {
-            console.log(comic.name, url)
             const page = await browser.newPage();
             await page.setViewport({ width: 1920, height: 1080 });
             await page.goto(url);
@@ -58,7 +160,6 @@ const handleStrip = (browser, comic, url) => {
 
             await page.screenshot({ path: `static/log/${comic.alias}.png` });
 
-
             const bodyHTML = await page.evaluate(() => document.body.innerHTML);
             $ = cheerio.load(bodyHTML)
             writeFile(comic.alias, $("html").html())
@@ -67,30 +168,44 @@ const handleStrip = (browser, comic, url) => {
             // create the comic folder if necessary
             if (!fs.existsSync(folder)) fs.mkdirSync(folder)
 
+            // cheerio map/each seem to be async that ignore await, do some tricks
+            let stripsOnPage = $(comic.comic_path).get();
+            for (var i in stripsOnPage) {
+                let element = stripsOnPage[i]
+                let image_url = null;
+                comic.image_src.split("|").some(src => {
+                    image_url = $(element).attr(src.trim())
+                    return image_url
+                })
 
-            // download images
-            let images = $(comic.comic_path).each(async (index, element) => {
-                let image_url = $(element).attr(comic.image_src)
-                if (!image_url) return resolve()
+                if (!image_url) continue;
                 image_url = image_url.trim().split(" ")[0]
                 image_url = urlTool.resolve(comic.last_url, image_url)
-                console.log("images", image_url)
-                let image = downloadImage(image_url, "randomfilename.webp", comic)
-                console.log(image)
-                
+
+                await Pause(1)
+                const strip = await downloadImage(image_url, comic, url)
+                if (strip) {
+                    //await comic.update({ last_url: url })
+                }
 
 
-            })
+            }
+
+
+
 
 
             let next = $(comic.next_path).attr('href')
             if (next) next = urlTool.resolve(url, next)
 
-            console.log(comic.name, next)
+            console.log("NEXT:", comic.name, next)
             await page.close()
             const pattern = new RegExp(comic.regex, "i")
-            if (next && (!comic.regex || next.match(pattern)))
+            if (next && (!comic.regex || next.match(pattern))) {
+                Pause(1)
                 await handleStrip(browser, comic, next)
+            }
+
             return resolve()
         } catch (err) {
             console.log(red(err))
@@ -106,7 +221,7 @@ const comicParser = async (logAll) => {
 
     let comics = await Comic.findAll({})
     let comicPromises = await Promise.all(comics.map(
-        async comic => handleStrip(browser, comic, comic.last_url)
+        async comic => await handleStrip(browser, comic, comic.last_url)
     ));
     console.log(cyan("CLOSING"))
     await browser.close()

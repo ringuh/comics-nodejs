@@ -64,7 +64,8 @@ module.exports = function (seq, type) {
         },
         image_src: {
             type: type.STRING,
-            default: "src"
+            defaultValue: "src",
+            allowNull: false
         },
         extension: { // if the image extension is unclear pick one of these
             type: type.STRING,
