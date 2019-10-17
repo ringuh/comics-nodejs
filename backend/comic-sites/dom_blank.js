@@ -11,7 +11,6 @@ module.exports = {
     list_path: null,
     extension: null,
     //image_src: null,
-    //javascript: null,
     dom_navigation: null,
     is_daily: true,
     genre: null,

@@ -173,11 +173,12 @@ const handleStrip = (browser, comic, url, count = 10) => {
     const maxId = parseInt(process.argv[3]) || parseInt(process.argv[2]) || 10000;
     if (comic.id < minId || comic.id > maxId) return true
 
-
-
     return new Promise(async resolve => {
         console.log(blue(comic.name, url))
         try {
+            // mark that you attempted smth
+            await comic.update({ last_attempt: Date.now() })
+
             const page = await browser.newPage();
             await page.setViewport({ width: 1920, height: 1080 });
             await page.goto(url);

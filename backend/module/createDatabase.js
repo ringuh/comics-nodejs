@@ -21,19 +21,27 @@ var createDB = async () => {
 		User.findOrCreate({ where: { googleId: i.googleId }, defaults: i })
 	});
 
-	
-	fs.readdirSync(comicSites, { withFileTypes: true })
-		.filter(file => file.name.endsWith('.js') 
-			&& !file.name.startsWith('dom_') 
+
+	let files = fs.readdirSync(comicSites, { withFileTypes: true })
+		.filter(file => file.name.endsWith('.js')
+			&& !file.name.startsWith('dom_')
 			&& !file.name.startsWith('tbd_'))
-		.forEach(file => {
-			const fn = `${sitesFolder}/${file.name.slice(0, file.name.length - 3)}`
-			const site = require(fn)
-			console.log(fn)
-			Comic.findOrCreate({ where: { name: site.name }, defaults: site })
-				.then(([comic, created]) => created ? console.log(cyan(comic.id, "+++", comic.name)): null )
-				.catch(err => console.log(fn, err.message));
-		});
+		.map(file => {
+			return {
+				name: file.name,
+				time: fs.statSync(path.join(comicSites, file.name)).birthtime.getTime()
+			}
+		}).sort((a, b) => { return a.time - b.time })
+
+	for (let i = 0; i < files.length; ++i) {
+		let file = files[i];
+		const fn = `${sitesFolder}/${file.name.slice(0, file.name.length - 3)}`
+		const site = require(fn)
+		
+		await Comic.findOrCreate({ where: { name: site.name }, defaults: site })
+			.then(([comic, created]) => created ? console.log(cyan(comic.id, "+++", comic.name)) : null)
+			.catch(err => console.log(fn, err.message));
+	}
 
 };
 

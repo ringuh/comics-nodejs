@@ -73,10 +73,9 @@ module.exports = function (seq, type) {
             // button.yes | wait | button.yes2
             type: type.STRING
         },
-        javascript: {
+        no_javascript: {
             type: type.BOOLEAN,
             defaultValue: true,
-            allowNull: false
         },
         is_daily: {
             type: type.BOOLEAN,
@@ -89,13 +88,13 @@ module.exports = function (seq, type) {
                 isIn: [['xxx']]
             }
         },
-        /* disabled: {
+        disabled: {
             type: type.BOOLEAN,
             defaultValue: false
         },
         last_attempt: {
-            type: type.DATETIME,
-        }, */
+            type: type.DATE,
+        },
 
     },
         {
