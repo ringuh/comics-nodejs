@@ -29,6 +29,8 @@ const cacheOrDownload = (url, force = false) => {
     return new Promise(resolve => {
         fs.readFile(path, function (err, data) {
             if (err) {
+                if(url.startsWith("http://")) url = url.replace("http://", "https://")
+                
                 https.get(url, response => response.pipe(concat({ encoding: 'buffer' }, (buf) => {
                     fs.writeFile(path, buf, async function (err) {
                         if (err) console.log(err);
@@ -99,14 +101,9 @@ const downloadImage = async (url, comic, page_url, title) => {
     });
 
     if (sourceFound) {
-        console.log(red("This image source already exists"))
+        console.log(red("This image source already exists", url))
         return null
     }
-
-    // if image wasnt base64 coded from source then presume it needs to be wget
-    /* buffer = buffer || await new Promise(resolve => {
-        https.get(url, response => response.pipe(concat({ encoding: 'buffer' }, (buf) => resolve(buf))))
-    }); */
 
     buffer = buffer || await cacheOrDownload(url);
 
@@ -165,7 +162,9 @@ const downloadImage = async (url, comic, page_url, title) => {
     return strip
 }
 
-const handleStrip = (browser, comic, url) => {
+const handleStrip = (browser, comic, url, count=10) => {
+    count--;
+    if(count === 0) return true
     const minId = parseInt(process.argv[2]) || 2;
     const maxId = parseInt(process.argv[3]) || parseInt(process.argv[2]) || 10000;
     if (comic.id < minId || comic.id > maxId) return true
@@ -182,9 +181,11 @@ const handleStrip = (browser, comic, url) => {
             // with dom_navigation press OK to prompt boxes and such
             // for example in tumblr
             if (comic.dom_navigation) {
+                await page.screenshot({ path: `static/log/${comic.alias}_pre.png` });
                 let promises = comic.dom_navigation.split("|").map(str => {
                     let cmd = str.trim()
                     if (cmd === "wait") return page.waitForNavigation({ waitUntil: 'networkidle0' })
+                    if (cmd === "pause") return Pause(5)
                     return page.click(cmd)
                 });
                 try {
@@ -223,7 +224,7 @@ const handleStrip = (browser, comic, url) => {
 
                 const strip = await downloadImage(image_url, comic, url, title)
                 if (strip) {
-                    //await comic.update({ last_url: url })
+                    await comic.update({ last_url: url })
                 }
 
 
@@ -242,7 +243,7 @@ const handleStrip = (browser, comic, url) => {
             const pattern = new RegExp(comic.regex, "i")
             if (next && (!comic.regex || next.match(pattern))) {
                 Pause(1)
-                await handleStrip(browser, comic, next)
+                await handleStrip(browser, comic, next, count)
             }
 
             return resolve()
@@ -257,10 +258,10 @@ const handleStrip = (browser, comic, url) => {
 
 const comicParser = async (logAll) => {
     const browser = await puppeteer.launch();
-
+    
     let comics = await Comic.findAll({})
     let comicPromises = await Promise.all(comics.map(
-        async comic => await handleStrip(browser, comic, comic.last_url)
+        async comic => await handleStrip(browser, comic, comic.last_url, process.argv[2] ? 999: 5)
     ));
     console.log(cyan("CLOSING"))
     await browser.close()

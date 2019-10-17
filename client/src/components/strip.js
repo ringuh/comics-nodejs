@@ -1,5 +1,7 @@
 import React from 'react';
+import { Link } from 'react-router-dom'
 import { withStyles } from '@material-ui/core/styles';
+import LazyLoad from 'react-lazyload'
 import Paper from '@material-ui/core/Paper'
 import Typography from '@material-ui/core/Typography'
 import Button from '@material-ui/core/Button'
@@ -36,6 +38,7 @@ const styles = theme => ({
     }
 });
 
+
 class Strip extends React.Component {
     constructor(props) {
         super(props);
@@ -59,39 +62,42 @@ class Strip extends React.Component {
 
         return (
             <Card className={classes.root}>
-                <CardActionArea>
-                    <CardContent className={classes.title}>
-                        <Typography gutterBottom variant="h6" component="span">
-                            {comic.name} {order}
-                        </Typography>
-                        <Typography gutterBottom variant="body2" color="textSecondary" component="span">
-                            titteli {title}
-                        </Typography>
-                        <Button component="a"
-                            variant="outlined"
-                            color="default"
-                            target="_blank"
-                            href={page_url}>
+                <LazyLoad height={300}  once>
+                    <CardActionArea>
+                        <CardContent className={classes.title}>
+                            <Typography gutterBottom variant="h6" component="span">
+                                <Button component={Link} to={`/comic/${comic.alias}/${order}`}>
+                                    {comic.name} - {order}
+                                </Button>
+                            </Typography>
+                            <Typography gutterBottom variant="body2" color="textSecondary" component="span">
+                                {title}
+                            </Typography>
+                            <Button component="a"
+                                variant="outlined"
+                                color="default"
+                                target="_blank"
+                                href={page_url}>
                                 <PublicIcon color="primary" />
+                            </Button>
+                        </CardContent>
+                        <img src={path} />
+                    </CardActionArea>
+                    <CardActions>
+                        <Button size="small" color="primary">
+                            <ThumbUpIcon color="inherit" />
                         </Button>
-                    </CardContent>
-                    <img src={path} />
-                </CardActionArea>
-                <CardActions>
-                    <Button size="small" color="primary">
-                        <ThumbUpIcon color="inherit" />
-                    </Button>
-                    <Button size="small" color="primary">
-                        <ThumbDownIcon color="inherit" />
-                    </Button>
-                    <Button size="small" color="primary">
-                        <FavoriteBorderIcon color="inherit" />
-                    </Button>
-                    <Button size="small" color="primary">
-                        <FavoriteBorderIcon color="inherit" />
-                    </Button>
-                </CardActions>
-
+                        <Button size="small" color="primary">
+                            <ThumbDownIcon color="inherit" />
+                        </Button>
+                        <Button size="small" color="primary">
+                            <FavoriteBorderIcon color="inherit" />
+                        </Button>
+                        <Button size="small" color="primary">
+                            <FavoriteBorderIcon color="inherit" />
+                        </Button>
+                    </CardActions>
+                </LazyLoad>
             </Card>
         )
     }

@@ -30,34 +30,27 @@ class Portal extends React.Component {
     }
 
     componentDidMount() {
-        this.changeDate(this.props.match.params.date)       
+        this.changeDate(this.props.match.params.date)
     }
 
-    componentWillReceiveProps(newProps) {
-        console.log("component will receive props", this.props, newProps)
-        
-        setTimeout(() => this.changeDate(newProps.match.params.date), 100)
-    }
 
-    changeDate(dateStr) {
-        this.setState({ redirect: null, strips: null })
-        console.log(dateStr, this.state.redirect)
-        const timestamp = Date.parse(dateStr)
+    changeDate = (changedDate) => {
+        // converting missing :date(yyyy-mm-dd) to a date object
+        const timestamp = Date.parse(changedDate)
         let date = isNaN(timestamp) ? new Date() : new Date(timestamp)
-        if (dateStr !== date.toLocaleDateString(global.config.locale))
-            return this.setState({ redirect: dateStr })
+        const dateStr = date.toLocaleDateString(global.config.locale)
+
+        if (dateStr !== this.props.match.params.date) {
+            this.setState({ redirect: dateStr })
+        }
+        
         this.fetchDate(date)
     }
 
     fetchDate = async (date) => {
-
         const yesterday = new Date(date)
         const tomorrow = new Date(date)
         const date_str = date.toLocaleDateString(global.config.locale)
-
-        if (date_str !== this.props.match.params.date)
-            return this.setState({ redirect: date_str })
-        
 
         yesterday.setDate(date.getDate() - 1)
         tomorrow.setDate(date.getDate() + 1)
@@ -67,12 +60,12 @@ class Portal extends React.Component {
             yesterday: yesterday,
             today: date,
             tomorrow: tomorrow,
-            redirect: false,
+            strips: null,
         })
 
         return axios.get(`/api/${date_str}`)
             .then(response => response.data)
-            .then(data => this.setState({ strips: data }))
+            .then(data => this.setState({ strips: data, redirect: null }))
             .then(() => console.log(`strips ${date_str}`, this.state.strips))
 
     }
@@ -80,13 +73,13 @@ class Portal extends React.Component {
         const { classes, match } = this.props
         const { state } = this
 
-        if (state.redirect) return <Redirect to={state.redirect} />
+        if (state.redirect) return <Box>ASD <Redirect to={state.redirect} /></Box>
 
         if (!state.strips) return <ProgressBar />
         if (state.strips.length === 0) return (
             <Box>
                 <PortalNavigation
-                    navigate={this.fetchDate}
+                    navigate={this.changeDate}
                     previous={state.yesterday}
                     next={state.tomorrow}
                     current={state.today} />
@@ -99,7 +92,7 @@ class Portal extends React.Component {
         return (
             <Box>
                 <PortalNavigation
-                    navigate={this.fetchDate}
+                    navigate={this.changeDate}
                     previous={state.yesterday}
                     next={state.tomorrow}
                     current={state.today} />

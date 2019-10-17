@@ -16,30 +16,33 @@ const styles = theme => ({
     }
 });
 
+
 const PortalNavigation = ({ classes, navigate, current, previous, next }) => {
     if (!current) return null;
     const today = new Date().toLocaleDateString(global.config.locale)
     const hidden = current.toLocaleDateString(global.config.locale) >= today
+    const next_str = next.toLocaleDateString(global.config.locale);
+    const prev_str = previous.toLocaleDateString(global.config.locale)
     
     return (
         <Box display="flex"
             justifyContent="space-between"
             className={classes.root}>
-            <Button onClick={() => navigate(previous)}
+            <Button onClick={() => navigate(prev_str)}
                 variant="outlined"
                 color="secondary"
             >
                 <PrevIcon fontSize="small" color="primary" />
-                {previous.toLocaleDateString(global.config.locale)}
+                {prev_str}
             </Button>
             <Typography variant="h5">{current.toLocaleDateString(global.config.locale)}</Typography>
 
-            <Button onClick={() => navigate(next)}
+            <Button onClick={() => navigate(next_str)}
                 variant="outlined"
                 color="primary"
                 disabled={hidden}
             >
-                {next.toLocaleDateString(global.config.locale)}
+                {next_str}
                 <NextIcon fontSize="small" color="secondary" />
             </Button>
 

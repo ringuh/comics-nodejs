@@ -45,10 +45,7 @@ const initDB = require('../module/createDatabase')
 db.sequelize = sequelize;
 db.Sequelize = Sequelize;
 const force = process.argv.includes("reset") || false
-db.sequelize.sync({ force: force, logging: false }).then(() => force ? initDB() : '')
-
-
-
-
+const soft = process.argv.includes("soft") || false 
+db.sequelize.sync({ force: force, logging: false }).then(() => force || soft ? initDB() : '')
 
 module.exports = db;

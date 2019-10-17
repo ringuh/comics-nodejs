@@ -37,14 +37,47 @@ router.use(function (req, res, next) {
 });
 
 
+router.get("/comic", Authenticated, (req, res) => {
+    console.log("COMIC", req.body, req.params, req.query)
+
+    let whereQuery = {}
+
+    Comic.findAll({
+        where: whereQuery,
+        include: [ { model: Strip, as: 'strips', required: true }],
+        order: [["id", "ASC"], ["strips", 'order', 'asc']]
+    }).then(comics =>
+        res.json(comics.map(comic => comic.toJson()))
+    ).catch(err => {
+        console.log(red(err.message))
+        res.status(500).json({ message: err.message })
+    })
+})
+
+
+router.get("/comic/:alias", Authenticated, (req, res) => {
+    console.log("11", req.body, req.params, req.query)
+
+    Comic.findOne({
+        where: { alias: req.params.alias },
+        include: [ { model: Strip, as: 'strips', required: true }],
+        order: [["id", "ASC"], ["strips", 'order', 'asc']],
+    }).then(comic =>
+        res.json(comic.toJson())
+    ).catch(err => {
+        console.log(red(err.message))
+        res.status(500).json({ message: err.message })
+    })
+})
+
 router.get(["/", "/:date"], Authenticated, (req, res) => {
-    console.log(req.body, req.params, req.query)
+    console.log("/:date", req.body, req.params, req.query)
 
     Strip.findAll({
         where: { date: req.params.date },
         order: ['comic_id', 'order'],
-        include: [ { model: Comic, as: 'comic', required: true }],
-        limit: 3
+        include: [{ model: Comic, as: 'comic', required: true }],
+        //limit: 200
     }).then(strips => {
         res.json(strips.map(strip => strip.toJson()))
     }).catch(err => {

@@ -30,10 +30,6 @@ module.exports = function (seq, type) {
         author: {
             type: type.STRING,
         },
-        logo: {
-            type: type.STRING,
-            defaultValue: "/files/dist/default.jpg"
-        }, // image of the book
         url: {
             type: type.STRING,
             validate: {
@@ -92,7 +88,14 @@ module.exports = function (seq, type) {
             validate: {
                 isIn: [['xxx']]
             }
-        }
+        },
+        /* disabled: {
+            type: type.BOOLEAN,
+            defaultValue: false
+        },
+        last_attempt: {
+            type: type.DATETIME,
+        }, */
 
     },
         {
@@ -101,6 +104,8 @@ module.exports = function (seq, type) {
 
     Model.prototype.toJson = function (user) {
         let ret = this.dataValues
+        if(this.strips)
+            ret.strips = this.strips.map(strip => strip.toJson(this.alias))
         return ret
     }
 

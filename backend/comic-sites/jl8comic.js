@@ -7,5 +7,4 @@ module.exports = {
     comic_path: "article > figure.photo-hires-item img",
     next_path: "#pagination-comic > nav > a.next-button",
     dom_navigation: "button.yes | wait",
-    title_path: "fail"
 }

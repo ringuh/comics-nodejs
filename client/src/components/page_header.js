@@ -32,7 +32,7 @@ const styles = theme => ({
 
 const Header = (props) => {
     const { classes, location } = props
-    if (location.pathname.match(/\/novel\/.*\/chapter/gi))
+    if (location.pathname.match(/\/comic\/.*\/chapter/gi))
         return (<div className={classes.root}></div>)
 
     // not logged
@@ -65,19 +65,19 @@ const Header = (props) => {
                             Home
                         </Typography>
                     </a>
-                    <a href="/novel">
+                    <a href="/comic">
                         <ImageIcon color="secondary" />
                         <Typography color="secondary">
                             Comics
                         </Typography>
                     </a>
-                    <a href="/novel">
+                    <a href="/favourites">
                         <FavouriteBorderIcon color="secondary" />
                         <Typography color="secondary">
                             Favourites
                         </Typography>
                     </a>
-                    <a href="/novel">
+                    <a href="/log">
                         <ListAltIcon color="secondary" />
                         <Typography color="secondary">
                             Log

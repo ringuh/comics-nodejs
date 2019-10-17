@@ -40,12 +40,12 @@ module.exports = function (seq, type) {
         timestamps: true,
     });
 
-    Model.prototype.toJson = function () {
+    Model.prototype.toJson = function (alias=this.comic.alias) {
         let ret = this.dataValues
         if (this.comic) {
             ret.comic = this.comic
-            ret.path = `http://localhost:3001/static/comics/${this.comic.alias}/${this.comic.alias}_${this.order}.webp`
         }
+        if(alias) ret.path = `http://localhost:3001/static/comics/${alias}/${alias}_${this.order}.webp`
 
         return ret
     }

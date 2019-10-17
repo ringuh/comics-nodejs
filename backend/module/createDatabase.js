@@ -23,11 +23,16 @@ var createDB = async () => {
 
 	
 	fs.readdirSync(comicSites, { withFileTypes: true })
-		.filter(file => file.name.endsWith('.js') && !file.name.startsWith('dom_'))
+		.filter(file => file.name.endsWith('.js') 
+			&& !file.name.startsWith('dom_') 
+			&& !file.name.startsWith('tbd_'))
 		.forEach(file => {
 			const fn = `${sitesFolder}/${file.name.slice(0, file.name.length - 3)}`
 			const site = require(fn)
+			console.log(fn)
 			Comic.findOrCreate({ where: { name: site.name }, defaults: site })
+				.then(([comic, created]) => created ? console.log(cyan(comic.id, "+++", comic.name)): null )
+				.catch(err => console.log(fn, err.message));
 		});
 
 };
