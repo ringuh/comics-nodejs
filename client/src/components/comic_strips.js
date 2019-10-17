@@ -83,7 +83,7 @@ class ComicStrips extends React.Component {
                     <GridListTile key={strip.id} cols={1} rows={1}>
                         <LazyLoad height={180} once>
                             <a href={`${match.url}/${strip.order}`}>
-                                <img src={strip.path} alt={strip.title} />
+                                <img src={strip.path_xs} alt={strip.title} />
                             </a>
                             <GridListTileBar className={classes.titleBar}
                                 title={`#${strip.order} ${strip.title ? strip.title : ''}`}

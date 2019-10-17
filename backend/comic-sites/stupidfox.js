@@ -6,7 +6,7 @@ module.exports = {
     last_url: "http://stupidfox.net/hello",
    /*  regex: null,
     title_path: null, */
-    comic_path: "#content_area > center:nth-child(4) > div.achwrap > div > center > img",
+    comic_path: "#content_area > center:nth-child(4) > div.achwrap > div > center img",
     next_path: "#content_area > center:nth-child(4) > div.pure-g > div:nth-child(3) > a",
     /* list_path: null,
     image_src: null,

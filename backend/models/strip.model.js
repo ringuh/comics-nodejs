@@ -45,7 +45,10 @@ module.exports = function (seq, type) {
         if (this.comic) {
             ret.comic = this.comic
         }
-        if(alias) ret.path = `http://localhost:3001/static/comics/${alias}/${alias}_${this.order}.webp`
+        if(alias){
+            ret.path = `http://localhost:3001/static/comics/${alias}/${alias}_${this.order}.webp`
+            ret.path_xs = `http://localhost:3001/static/comics/${alias}/xs_${alias}_${this.order}.webp`
+        }
 
         return ret
     }

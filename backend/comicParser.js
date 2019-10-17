@@ -29,8 +29,8 @@ const cacheOrDownload = (url, force = false) => {
     return new Promise(resolve => {
         fs.readFile(path, function (err, data) {
             if (err) {
-                if(url.startsWith("http://")) url = url.replace("http://", "https://")
-                
+                if (url.startsWith("http://")) url = url.replace("http://", "https://")
+
                 https.get(url, response => response.pipe(concat({ encoding: 'buffer' }, (buf) => {
                     fs.writeFile(path, buf, async function (err) {
                         if (err) console.log(err);
@@ -65,19 +65,19 @@ const writeFile = async (filename, content, buffer) => {
 }
 
 const getTitle = ($, title_path) => {
-    if(!title_path) return null
+    if (!title_path) return null
 
     let cmds = title_path.split("?").map(p => p.trim())
     let dom_path = cmds[0]
-    let [func, attr] = cmds[1] ? cmds[1].split(":"): [null, null]
-    if(func === "attr") return $(dom_path).attr(attr).trim()
-    else if(func === "text") return $(dom_path).text().trim()
-    
+    let [func, attr] = cmds[1] ? cmds[1].split(":") : [null, null]
+    if (func === "attr") return $(dom_path).attr(attr).trim()
+    else if (func === "text") return $(dom_path).text().trim()
+
 }
 
 const downloadImage = async (url, comic, page_url, title) => {
     /* const test_images = require("./static/log/test_images.json");
-    url = test_images.svg_base64 */
+    url = test_images.gif */
 
     let buffer = null;
     let ext = pathTool.extname(url).slice(1)
@@ -116,8 +116,9 @@ const downloadImage = async (url, comic, page_url, title) => {
         order: [["order", "DESC"]],
     })
     const next_order = allStrips.length > 0 ? allStrips[0].order + 1 : 1;
+    const [sm, xs] = [600, 480]
     const path = `static/comics/${comic.alias}/${comic.alias}_${next_order}.webp`
-
+    const path_xs = `static/comics/${comic.alias}/xs_${comic.alias}_${next_order}.webp`
     // check existing strips for similar / same images
     for (let i in allStrips) {
         const compareStrip = allStrips[i];
@@ -140,6 +141,7 @@ const downloadImage = async (url, comic, page_url, title) => {
                 // remove the previous tmp from hdd
                 fs.unlinkSync(tmp_path)
             }));
+
     } // for webp, converting will destroy animation so just directly save buffer to file 
     else if (ext === "webp") {
         image = await writeFile(path, buffer, true);
@@ -149,6 +151,8 @@ const downloadImage = async (url, comic, page_url, title) => {
     }
     if (!image) return null
     console.log(green("Saving with hash", hash_for_image))
+
+    await sharp(buffer).resize(xs).webp({ lossless: false }).toFile(path_xs);
 
     const strip = await Strip.create({
         comic_id: comic.id,
@@ -162,9 +166,9 @@ const downloadImage = async (url, comic, page_url, title) => {
     return strip
 }
 
-const handleStrip = (browser, comic, url, count=10) => {
+const handleStrip = (browser, comic, url, count = 10) => {
     count--;
-    if(count === 0) return true
+    if (count === 0) return true
     const minId = parseInt(process.argv[2]) || 2;
     const maxId = parseInt(process.argv[3]) || parseInt(process.argv[2]) || 10000;
     if (comic.id < minId || comic.id > maxId) return true
@@ -230,8 +234,8 @@ const handleStrip = (browser, comic, url, count=10) => {
 
             }
 
-            
-            
+
+
 
 
 
@@ -258,10 +262,10 @@ const handleStrip = (browser, comic, url, count=10) => {
 
 const comicParser = async (logAll) => {
     const browser = await puppeteer.launch();
-    
+
     let comics = await Comic.findAll({})
     let comicPromises = await Promise.all(comics.map(
-        async comic => await handleStrip(browser, comic, comic.last_url, process.argv[2] ? 999: 5)
+        async comic => await handleStrip(browser, comic, comic.last_url, process.argv[2] ? 999 : 5)
     ));
     console.log(cyan("CLOSING"))
     await browser.close()

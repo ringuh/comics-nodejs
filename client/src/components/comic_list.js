@@ -53,7 +53,7 @@ class ComicStrips extends React.Component {
                         title: 'Avatar',
                         //field: 'strips[0].path',
                         render: rowData =>
-                            <img src={rowData.strips[0].path} style={{ width: 40, minHeight: 40, borderRadius: '35%' }} />
+                            <img src={rowData.strips[0].path_xs} style={{ width: 40, minHeight: 40, borderRadius: '35%' }} />
                     },
                     { title: 'Name', field: 'name' },
                     {
