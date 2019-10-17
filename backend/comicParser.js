@@ -62,6 +62,17 @@ const writeFile = async (filename, content, buffer) => {
     })
 }
 
+const getTitle = ($, title_path) => {
+    if(!title_path) return null
+
+    let cmds = title_path.split("?").map(p => p.trim())
+    let dom_path = cmds[0]
+    let [func, attr] = cmds[1] ? cmds[1].split(":"): [null, null]
+    if(func === "attr") return $(dom_path).attr(attr).trim()
+    else if(func === "text") return $(dom_path).text().trim()
+    
+}
+
 const downloadImage = async (url, comic, page_url, title) => {
     /* const test_images = require("./static/log/test_images.json");
     url = test_images.svg_base64 */
@@ -194,6 +205,8 @@ const handleStrip = (browser, comic, url) => {
             // create the comic folder if necessary
             if (!fs.existsSync(folder)) fs.mkdirSync(folder)
 
+            const title = getTitle($, comic.title_path)
+
             // cheerio map/each seem to be async that ignore await, do some tricks
             let stripsOnPage = $(comic.comic_path).get();
             for (var i in stripsOnPage) {
@@ -208,7 +221,7 @@ const handleStrip = (browser, comic, url) => {
                 image_url = image_url.trim().split(" ")[0]
                 image_url = urlTool.resolve(comic.last_url, image_url)
 
-                const strip = await downloadImage(image_url, comic, url)
+                const strip = await downloadImage(image_url, comic, url, title)
                 if (strip) {
                     //await comic.update({ last_url: url })
                 }
@@ -216,7 +229,8 @@ const handleStrip = (browser, comic, url) => {
 
             }
 
-
+            
+            
 
 
 

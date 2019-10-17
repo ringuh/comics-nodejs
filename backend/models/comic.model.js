@@ -82,6 +82,17 @@ module.exports = function (seq, type) {
             defaultValue: true,
             allowNull: false
         },
+        is_daily: {
+            type: type.BOOLEAN,
+            allowNull: false,
+            defaultValue: true
+        },
+        genre: {
+            type: type.STRING,
+            validate: {
+                isIn: [['xxx']]
+            }
+        }
 
     },
         {
