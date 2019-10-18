@@ -44,10 +44,10 @@ router.get("/comic", Authenticated, (req, res) => {
 
     Comic.findAll({
         where: whereQuery,
-        include: [ { model: Strip, as: 'strips', required: true }],
+        include: [{ model: Strip, as: 'strips', required: true }],
         order: [["id", "ASC"], ["strips", 'order', 'asc']]
     }).then(comics =>
-        res.json(comics.map(comic => comic.toJson()))
+        res.json(comics.map(comic => comic.toJson(-1)))
     ).catch(err => {
         console.log(red(err.message))
         res.status(500).json({ message: err.message })
@@ -60,10 +60,10 @@ router.get("/comic/:alias", Authenticated, (req, res) => {
 
     Comic.findOne({
         where: { alias: req.params.alias },
-        include: [ { model: Strip, as: 'strips', required: true }],
+        include: [{ model: Strip, as: 'strips', required: false }],
         order: [["id", "ASC"], ["strips", 'order', 'asc']],
     }).then(comic =>
-        res.json(comic.toJson())
+        comic ? res.json(comic.toJson()) : res.status(525).json({ message: "Comic not found" })
     ).catch(err => {
         console.log(red(err.message))
         res.status(500).json({ message: err.message })

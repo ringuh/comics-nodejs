@@ -73,10 +73,6 @@ module.exports = function (seq, type) {
             // button.yes | wait | button.yes2
             type: type.STRING
         },
-        no_javascript: {
-            type: type.BOOLEAN,
-            defaultValue: true,
-        },
         is_daily: {
             type: type.BOOLEAN,
             allowNull: false,
@@ -101,10 +97,18 @@ module.exports = function (seq, type) {
             timestamps: true,
         });
 
-    Model.prototype.toJson = function (user) {
+    Model.prototype.toJson = function (stripNr) {
         let ret = this.dataValues
-        if(this.strips)
-            ret.strips = this.strips.map(strip => strip.toJson(this.alias))
+        if (this.strips) {
+            if (stripNr === -1) {
+                ret.strips = this.strips.length;
+            }
+            else {
+                ret.strips = this.strips.map(strip => strip.toJson(this.alias))
+            }
+            ret.last_strip = this.strips[this.strips.length - 1].toJson(this.alias)
+        }
+
         return ret
     }
 
