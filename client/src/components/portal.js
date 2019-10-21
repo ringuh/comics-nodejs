@@ -2,7 +2,7 @@ import React from 'react';
 import { Redirect } from 'react-router-dom';
 import { withStyles } from '@material-ui/core/styles';
 import PortalNavigation from './portal_navigation'
-import Strip from './strip'
+import Strip from './comic/strip'
 import Paper from '@material-ui/core/Paper'
 import Typography from '@material-ui/core/Typography'
 import Box from '@material-ui/core/Box'
@@ -73,7 +73,7 @@ class Portal extends React.Component {
         const { classes, match } = this.props
         const { state } = this
 
-        if (state.redirect) return <Box>ASD <Redirect to={state.redirect} /></Box>
+        if (state.redirect) return <Redirect to={state.redirect} />
 
         if (!state.strips) return <ProgressBar />
         if (state.strips.length === 0) return (

@@ -2,12 +2,12 @@ import React from 'react';
 import { Redirect } from 'react-router-dom';
 import LazyLoad from 'react-lazyload'
 import { withStyles } from '@material-ui/core/styles';
-import PortalNavigation from './portal_navigation'
+import PortalNavigation from '../portal_navigation'
 import Strip from './strip'
 import Paper from '@material-ui/core/Paper'
 import Typography from '@material-ui/core/Typography'
 import Box from '@material-ui/core/Box'
-import ProgressBar from '../util/ProgressBar'
+import ProgressBar from '../../util/ProgressBar'
 import GridList from '@material-ui/core/GridList';
 import GridListTile from '@material-ui/core/GridListTile';
 import GridListTileBar from '@material-ui/core/GridListTileBar';
@@ -43,7 +43,7 @@ const styles = theme => ({
     },
 });
 
-class ComicStrips extends React.Component {
+class ComicsStrips extends React.Component {
     constructor(props) {
         super(props);
 
@@ -52,33 +52,31 @@ class ComicStrips extends React.Component {
     }
 
     componentDidMount() {
-        console.log(this.props.match.path)
-        this.fetchComic(this.props.match.params.alias)
-    }
-
-    fetchComic = async (alias) => {
-        return axios.get(`/api/comic/${alias}`)
-            .then(response => response.data)
-            .then(data => this.setState({ ...data }))
-            .then(() => console.log(`comic`, this.state))
+        console.log(this.props)
     }
 
     render() {
-        const { classes, match } = this.props
+        const { classes, match, comic } = this.props
         const { state } = this
 
-        if (!state.id) return <ProgressBar />
+        if (!comic.id) return null
 
         return (<Box display="flex" className={classes.root}>
             <Box display="flex" className={classes.heading}>
-                {/* <IconButton><StarBorderIcon /></IconButton> */}
                 <Typography variant="h3" color="textSecondary" gutterBottom>
-                    {state.name} ({state.strips.length})
+                    {comic.name} ({comic.strips.length})
                 </Typography>
-                <IconButton component="a" href={state.url}><PublicIcon color="primary" fontSize="medium" /></IconButton>
+                <IconButton component="a" href={comic.url}><PublicIcon color="primary" /></IconButton>
             </Box>
+            {comic.strips.length === 0 &&
+            <Box style={{width:"100%", textAlign:"left", margin:"4em"}}>
+                <Typography variant="subtitle1" color="textPrimary">
+                    No strips found
+                </Typography>
+            </Box>
+            }
             <GridList cellHeight={180} cols={2} spacing={8} className={classes.gridList}>
-                {state.strips.map(strip => (
+                {comic.strips.reverse().map(strip => (
 
                     <GridListTile key={strip.id} cols={1} rows={1}>
                         <LazyLoad height={180} once>
@@ -107,4 +105,4 @@ class ComicStrips extends React.Component {
     }
 }
 
-export default withStyles(styles)(ComicStrips);
+export default withStyles(styles)(ComicsStrips);

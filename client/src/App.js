@@ -2,11 +2,10 @@ import React from 'react';
 import { BrowserRouter, Switch, Route } from 'react-router-dom';
 import CssBaseline from '@material-ui/core/CssBaseline';
 import './App.css';
-import ComicList from './components/comic_list'
+import ListComics from './components/comic/list_comics'
 import Portal from './components/portal'
 import Logout from './components/logout'
-import StripBrowser from './components/strip_browser'
-import ComicStrips from './components/comic_strips'
+import ComicIndex from './components/comic'
 import PageNotFound from './components/page_not_found'
 import Footer from './components/page_footer'
 import Header from './components/page_header'
@@ -27,9 +26,8 @@ function App() {
           {global.user &&
             <Switch>
               <Route exact path="/logout" component={Logout} />
-              <Route exact path={["/comic"]} component={ComicList} />
-              <Route exact path={["/comic/:alias"]} component={ComicStrips} />
-              <Route exact path={["/comic/:alias/:order"]} component={StripBrowser} />
+              <Route exact path={["/comic"]} component={ListComics} />
+              <Route path={["/comic/:alias", /* "/comic/:alias/:order" */]} component={ComicIndex} />
               <Route exact path={["/", "/:date"]} component={Portal} />
               {/*  <Route exact path="/novel" component={NovelList} />
               <Route exact path="/novel/:alias" component={Novel} />
